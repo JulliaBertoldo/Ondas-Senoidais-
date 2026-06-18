@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Laboratório de Efeito de Batimento</title>
+  <style>
+    :root { --bg-dark: #090a10; --bg-panel: #131422; --border-glow: #ff00ff; --accent-cyan: #00f0ff; --text-main: #cdd6f4; --text-dim: #79829a; }
+    body { margin: 0; background: var(--bg-dark); color: var(--text-main); font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; box-sizing: border-box; }
+    .lab-title { text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255, 0, 255, 0.5); margin-bottom: 5px; color: #ffffff; }
+    .status-bar { font-size: 12px; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px; }
+    canvas { border: 2px solid var(--border-glow); background: #06070d; border-radius: 12px; box-shadow: 0 0 20px rgba(255, 0, 255, 0.15); }
+    .control-room { display: flex; gap: 30px; margin-top: 25px; background: var(--bg-panel); padding: 25px; border-radius: 12px; border: 1px solid rgba(255, 0, 255, 0.2); box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.05); }
+    .generator { display: flex; flex-direction: column; align-items: center; width: 180px; }
+    .generator h3 { margin: 0 0 15px 0; font-size: 14px; letter-spacing: 1px; color: var(--accent-cyan); }
+    .knob-container { position: relative; width: 80px; height: 80px; cursor: ns-resize; }
+    .knob { width: 100%; height: 100%; border-radius: 50%; background: #181926; border: 3px solid #2e304f; box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.05); position: relative; }
+    .knob:hover { border-color: var(--border-glow); }
+    .pointer { width: 4px; height: 25px; background: var(--border-glow); position: absolute; top: 5px; left: 38px; transform-origin: bottom center; box-shadow: 0 0 8px var(--border-glow); }
+    .freq-display { margin-top: 15px; font-size: 20px; font-weight: bold; background: #07080f; padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255, 0, 255, 0.1); width: 110px; text-align: center; color: var(--accent-cyan); }
+    .center-panel { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+    button { background: #141221; color: var(--text-main); border: 1px solid var(--border-glow); padding: 12px 20px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 6px; transition: all 0.2s; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+    button:hover { background: var(--border-glow); color: #000; box-shadow: 0 0 15px rgba(255, 0, 255, 0.4); }
+    button.active-btn { background: #3c1242; border-color: var(--accent-cyan); color: var(--accent-cyan); box-shadow: inset 0 0 10px rgba(0,240,255,0.2); }
+    button.stop-btn { background: #2b1111; color: #ff4444; border-color: #ff4444; }
+    button.stop-btn:hover { background: #ff4444; color: #000; box-shadow: 0 0 15px rgba(255, 68, 68, 0.4); }
+    footer { margin-top: auto; width: 100%; max-width: 1000px; border-top: 1px dashed rgba(255, 0, 255, 0.2); padding-top: 15px; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); }
+  </style>
+</head>
+<body>
+  <h2 class="lab-title">Laboratório de Efeito de Batimento (Acelerador Acústico)</h2>
+  <div class="status-bar" id="sysStatus">SISTEMA OPERACIONAL: ATIVO // FREQUÊNCIAS SINTONIZADAS</div>
+  <canvas id="canvas" width="1000" height="350"></canvas>
+  <div class="control-room">
+    <div class="generator">
+      <h3>GERADOR ALFA</h3>
+      <div class="knob-container" id="container1"><div class="knob" id="knob1"><div class="pointer" id="pointer1"></div></div></div>
+      <div class="freq-display" id="disp1">440 Hz</div>
+    </div>
+    <div class="center-panel">
+      <button id="toggleAudio">INICIAR ACELERADOR SONORO</button>
+      <button id="presetSintonia">SINCRONIA PERFEITA (0 Hz)</button>
+      <button id="presetBatimento">CONFIGURAR BATIMENTO (2 Hz)</button>
+      <button id="btnStopAll" class="stop-btn">PARAR TUDO (SILÊNCIO ABSOLUTO)</button>
+    </div>
+    <div class="generator">
+      <h3>GERADOR BETA</h3>
+      <div class="knob-container" id="container2"><div class="knob" id="knob2"><div class="pointer" id="pointer2"></div></div></div>
+      <div class="freq-display" id="disp2">442 Hz</div>
+    </div>
+  </div>
+  <footer>
+    <div>OPERADOR: Julli // LAB DE ONDULATÓRIA</div>
+    <div>PERÍODO LETIVO: 2025/2026 // ACÚSTICA AVANÇADA</div>
+  </footer>
+  <script>
+    const canvas = document.getElementById("canvas"), ctx = canvas.getContext("2d");
+    const width = canvas.width, height = canvas.height, centerY = height / 2;
+    let f1 = 440, f2 = 442, emParadaTotal = false, audioCtx = null, osc1 = null, osc2 = null, gain1 = null, gain2 = null, ligado = false, t = 0;
+    const disp1 = document.getElementById("disp1"), disp2 = document.getElementById("disp2"), pointer1 = document.getElementById("pointer1"), pointer2 = document.getElementById("pointer2"), sysStatus = document.getElementById("sysStatus");
+    const btnToggleAudio = document.getElementById("toggleAudio"), btnSintonia = document.getElementById("presetSintonia"), btnBatimento = document.getElementById("presetBatimento"), btnStopAll = document.getElementById("btnStopAll");
+
+    function mapearKnob(containerId, pointerId, valueInit, min, max, onChange) {
+      const container = document.getElementById(containerId), pointer = document.getElementById(pointerId);
+      let val = valueInit, startY = 0, startVal = 0;
+      pointer.style.transform = `rotate(${((val - min) / (max - min)) * 270 - 135}deg)`;
+      function onMouseMove(e) {
+        if(emParadaTotal) return;
+        let newVal = Math.min(max, Math.max(min, Math.round(startVal + (startY - e.clientY) * 0.3)));
+        pointer.style.transform = `rotate(${((newVal - min) / (max - min)) * 270 - 135}deg)`;
+        onChange(newVal);
+      }
+      function onMouseUp() { document.removeEventListener("mousemove", onMouseMove); document.removeEventListener("mouseup", onMouseUp); }
+      container.addEventListener("mousedown", (e) => { if(emParadaTotal) return; startY = e.clientY; startVal = val; document.addEventListener("mousemove", onMouseMove); document.addEventListener("mouseup", onMouseUp); e.preventDefault(); });
+      return { setVal: (newVal) => { val = newVal; pointer.style.transform = `rotate(${((newVal - min) / (max - min)) * 270 - 135}deg)`; onChange(newVal); } };
+    }
+    const knobAlfa = mapearKnob("container1", "pointer1", 440, 420, 460, (v) => { f1 = v; disp1.textContent = v + " Hz"; atualizarAudio(); });
+    const knobBeta = mapearKnob("container2", "pointer2", 442, 420, 460, (v) => { f2 = v; disp2.textContent = v + " Hz"; atualizarAudio(); });
+
+    function iniciarAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      osc1 = audioCtx.createOscillator(); gain1 = audioCtx.createGain(); osc2 = audioCtx.createOscillator(); gain2 = audioCtx.createGain();
+      osc1.type = 'sine'; osc2.type = 'sine'; osc1.connect(gain1); gain1.connect(audioCtx.destination); osc2.connect(gain2); gain2.connect(audioCtx.destination);
+      osc1.start(); osc2.start(); atualizarAudio();
+    }
+    function atualizarAudio() { if (!audioCtx || emParadaTotal) return; osc1.frequency.setValueAtTime(f1, audioCtx.currentTime); osc2.frequency.setValueAtTime(f2, audioCtx.currentTime); gain1.gain.setValueAtTime(0.08, audioCtx.currentTime); gain2.gain.setValueAtTime(0.08, audioCtx.currentTime); }
+
+    btnToggleAudio.addEventListener("click", () => {
+      if(emParadaTotal) { emParadaTotal = false; sysStatus.textContent = "SISTEMA OPERACIONAL: ATIVO // FREQUÊNCIAS SINTONIZADAS"; sysStatus.style.color = "var(--text-dim)"; }
+      if (!ligado) { if (!audioCtx) iniciarAudio(); else audioCtx.resume(); btnToggleAudio.textContent = "DESLIGAR ACELERADOR"; btnToggleAudio.classList.add("active-btn"); ligado = true; }
+      else { if (audioCtx) audioCtx.suspend(); btnToggleAudio.textContent = "INICIAR ACELERADOR SONORO"; btnToggleAudio.classList.remove("active-btn"); ligado = false; }
+    });
+    btnSintonia.addEventListener("click", () => { if(emParadaTotal) return; knobAlfa.setVal(440); knobBeta.setVal(440); });
+    btnBatimento.addEventListener("click", () => { if(emParadaTotal) return; knobAlfa.setVal(440); knobBeta.setVal(442); });
+    btnStopAll.addEventListener("click", () => { emParadaTotal = true; ligado = false; if (audioCtx) audioCtx.suspend(); btnToggleAudio.textContent = "INICIAR ACELERADOR SONORO"; btnToggleAudio.classList.remove("active-btn"); sysStatus.textContent = "SISTEMA BLOQUEADO: EMISSÃO DE SINAL CESSADA // SILÊNCIO ABSOLUTO"; sysStatus.style.color = "#ff4444"; });
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.beginPath(); ctx.strokeStyle = "rgba(255, 0, 255, 0.1)"; ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = emParadaTotal ? "#ff4444" : "#00f0ff"; ctx.lineWidth = 2;
+      if (emParadaTotal) { ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); }
+      else {
+        let v_f1 = f1 * 0.04, v_f2 = f2 * 0.04;
+        for (let x = 0; x < width; x++) {
+          let yTotal = centerY + (Math.sin(v_f1 * (x * 0.05 - t * 0.02)) + Math.sin(v_f2 * (x * 0.05 - t * 0.02))) * 55;
+          if (x === 0) ctx.moveTo(x, yTotal); else ctx.lineTo(x, yTotal);
+        }
+        t += 1;
+      }
+      ctx.stroke(); requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>

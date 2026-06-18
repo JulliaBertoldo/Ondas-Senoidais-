@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Cuba de Ondas 2D</title>
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-panel: #111420;
+      --border-color: #22273a;
+      --text-main: #cdd6f4;
+      --text-bright: #f5e0dc;
+      --cyan-glow: #00f0ff;
+    }
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    h2 {
+      margin: 0 0 5px 0;
+      color: var(--text-bright);
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #7f849c;
+      margin-bottom: 20px;
+      text-align: center;
+      max-width: 600px;
+    }
+    .main-layout {
+      display: flex;
+      gap: 25px;
+      background: var(--bg-panel);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .canvas-container {
+      position: relative;
+    }
+    canvas {
+      background: #000;
+      border-radius: 12px;
+      border: 1px solid #313244;
+      cursor: crosshair;
+      display: block;
+    }
+    .control-sidebar {
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .card-info {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .card-info h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: var(--cyan-glow);
+    }
+    button {
+      padding: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      background: #1e1e2e;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    button:hover {
+      background: #313244;
+      border-color: #585b70;
+      color: #fff;
+    }
+    button.clear-btn {
+      background: #2a1414;
+      color: #f38ba8;
+      border-color: rgba(243, 139, 168, 0.2);
+    }
+    button.clear-btn:hover {
+      background: #f38ba8;
+      color: #111420;
+    }
+    footer {
+      width: 100%;
+      max-width: 930px;
+      margin-top: 30px;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6c7086;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Simulador de Cuba de Ondas 2D</h2>
+  <div class="subtitle">Interferência Bidimensional e Difração através do Princípio de Superposição</div>
+
+  <div class="main-layout">
+    <div class="canvas-container">
+      <canvas id="canvas" width="600" height="400"></canvas>
+    </div>
+
+    <div class="control-sidebar">
+      <div class="card-info">
+        <h3>Instruções de Uso</h3>
+        Clique em <b>dois pontos diferentes</b> do quadrado preto para criar duas fontes de gotas constantes e observar o padrão de franjas.
+      </div>
+
+      <div class="card-info">
+        <h3>Legenda Física</h3>
+        • <b>Zonas Claras (Ciano):</b> Interferência Construtiva (crista com crista).<br>
+        • <b>Zonas Escuras (Preto):</b> Interferência Destrutiva (crista com vale - calmaria).
+      </div>
+
+      <button id="btnDuasFontes">Gerar 2 Fontes Padrão</button>
+      <button id="btnClear" class="clear-btn">Limpar Cuba de Ondas</button>
+    </div>
+  </div>
+
+    <footer>
+    <div>Operador: Jullia // Experimento de Young Digitalizado</div>
+    <div>Física Ondulatória // Ano Letivo 2026</div>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Cria buffer de imagem para manipulação direta de pixels (Desempenho de alta velocidade)
+    const imgData = ctx.createImageData(width, height);
+    const data = imgData.data;
+
+    // Lista de fontes emissoras de ondas
+    let fontes = [];
+
+    // Parâmetros Físicos da Onda
+    const frequencia = 0.12; 
+    const comprimentoOnda = 18; 
+
+    // Adiciona uma nova fonte ao clicar
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Limita a no máximo 4 fontes para manter o gráfico limpo
+      if (fontes.length >= 4) fontes.shift();
+      
+      fontes.push({ x: x, y: y });
+    });
+
+    document.getElementById("btnDuasFontes").addEventListener("click", () => {
+      fontes = [
+        { x: width / 2 - 40, y: height / 2 },
+        { x: width / 2 + 40, y: height / 2 }
+      ];
+    });
+
+    document.getElementById("btnClear").addEventListener("click", () => {
+      fontes = [];
+    });
+
+    let t = 0;
+
+    function renderizarCuba() {
+      // Loop por cada pixel do canvas
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let amplitudeTotal = 0;
+
+          // Aplica o Princípio da Superposição: soma as distâncias de todas as fontes ativas
+          for (let i = 0; i < fontes.length; i++) {
+            let f = fontes[i];
+            let dx = x - f.x;
+            let dy = y - f.y;
+            let distancia = Math.sqrt(dx * dx + dy * dy);
+
+            // Equação da onda circular com atenuação natural baseada na distância
+            if (distancia > 2) {
+              amplitudeTotal += Math.sin(distancia / (comprimentoOnda / (2 * Math.PI)) - t * frequencia) * (15 / Math.sqrt(distancia));
+            }
+          }
+
+          // Converte o valor matemático da amplitude para brilho de cor (0 a 255)
+          // Normaliza o centro no cinza escuro, cristas brilham em ciano e vales decrescem
+          let brilho = Math.floor((amplitudeTotal + 1) * 127.5);
+          brilho = Math.max(0, Math.min(255, brilho));
+
+          let idx = (x + y * width) * 4;
+
+          // Configura paleta de cores estilo ciano aquático profundo
+          data[idx] = Math.floor(brilho * 0.1);     // Vermelho (baixo)
+          data[idx + 1] = Math.floor(brilho * 0.8); // Verde (médio-alto)
+          data[idx + 2] = brilho;                   // Azul (máximo)
+          data[idx + 3] = 255;                      // Opacidade Alpha
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+
+      // Desenha pequenos círculos brancos para indicar visualmente onde estão as fontes de gotas
+      ctx.fillStyle = "#ffffff";
+      for (let i = 0; i < fontes.length; i++) {
+        ctx.beginPath();
+        ctx.arc(fontes[i].x, fontes[i].y, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      t += 1;
+      requestAnimationFrame(renderizarCuba);
+    }
+
+    // Inicializa com duas fontes padrão para a tela não abrir vazia
+    fontes = [
+      { x: width / 2 - 50, y: height / 2 },
+      { x: width / 2 + 50, y: height / 2 }
+    ];
+
+    renderizarCuba();
+  </script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Interferência de Ondas Senoidais</title>
+  <style>
+    :root {
+      --bg-main: #0d1117;
+      --bg-card: #161b22;
+      --border-color: #30363d;
+      --text-main: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --accent-blue: #1f6feb;
+      --accent-cyan: #00f0ff;
+      --accent-magenta: #ff00ff;
+    }
+    body {
+      margin: 0;
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    h2 {
+      margin: 10px 0 5px 0;
+      color: var(--text-bright);
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+    canvas {
+      border: 1px solid var(--border-color);
+      margin-top: 15px;
+      background: #070a10;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 20px;
+    }
+    .wave-control {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      width: 280px;
+    }
+    .wave-control h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+      margin: 14px 0;
+    }
+    .row-val {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .label-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .val {
+      font-weight: 600;
+      color: #58a6ff;
+      background: rgba(88, 166, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+      accent-color: #58a6ff;
+    }
+    .help-icon {
+      background: #30363d;
+      color: #8b949e;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+      position: relative;
+      font-weight: bold;
+    }
+    .help-icon:hover {
+      background: #8b949e;
+      color: #161b22;
+    }
+    .help-icon::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #21262d;
+      color: #c9d1d9;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 200px;
+      border: 1px solid #30363d;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 10;
+      line-height: 1.4;
+    }
+    .help-icon:hover::after {
+      opacity: 1;
+    }
+    .buttons {
+      margin-top: 25px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid rgba(240, 246, 252, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      background: #21262d;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: #30363d;
+      border-color: #8b949e;
+      color: var(--text-bright);
+    }
+    button.active-constructive {
+      border-color: rgba(46, 160, 67, 0.4);
+      background: rgba(46, 160, 67, 0.15);
+      color: #56d364;
+    }
+    button.active-destructive {
+      border-color: rgba(248, 81, 73, 0.4);
+      background: rgba(248, 81, 73, 0.15);
+      color: #ffa198;
+    }
+    button#toggleAudio {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+    }
+    button#toggleAudio:hover {
+      filter: brightness(1.1);
+    }
+    button#toggleAudio.playing {
+      background: #30363d;
+      color: #ffa198;
+      border: 1px solid rgba(248, 81, 73, 0.4);
+    }
+    .legend-container {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+      font-size: 12px;
+      background: rgba(22, 27, 34, 0.5);
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-color {
+      width: 12px;
+      height: 4px;
+      border-radius: 2px;
+    }
+    footer {
+      margin-top: auto;
+      width: 100%;
+      max-width: 1000px;
+      border-top: 1px solid var(--border-color);
+      padding: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #8b949e;
+    }
+    .footer-left span {
+      display: block;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Interferência de Ondas Senoidais</h2>
+  <canvas id="canvas" width="1000" height="400"></canvas>
+  
+  <div class="legend-container">
+    <div class="legend-item"><div class="legend-color" style="background: var(--accent-cyan)"></div> Onda 1</div>
+    <div class="legend-item"><div class="legend-color" style="background: var(--accent-magenta)"></div> Onda 2</div>
+    <div class="legend-item"><div class="legend-color" style="background: #ffffff; height: 6px;"></div> Onda Resultante</div>
+  </div>
+
+  <div class="controls">
+    <div class="wave-control">
+      <h3 style="color: var(--accent-cyan);">Onda 1 <span class="help-icon" data-tooltip="Primeira componente senoidal. Suas propriedades se somam matematicamente ponto a ponto com as da Onda 2.">?</span></h3>
+      <label>
+        <div class="row-val"><span class="label-title">Amplitude <span class="help-icon" data-tooltip="A altura máxima da crista da onda. Define a intensidade do sinal ou volume.">?</span></span><span id="v_amp1" class="val">50</span></div>
+        <input id="amp1" type="range" min="0" max="100" value="50">
+      </label>
+      <label>
+        <div class="row-val"><span class="label-title">Frequência <span class="help-icon" data-tooltip="Número de ciclos por espaço. Define a altura tonal do som.">?</span></span><span id="v_freq1" class="val">2</span></div>
+        <input id="freq1" type="range" min="1" max="5" value="2">
+      </label>
+      <label>
+        <div class="row-val"><span class="label-title">Fase <span class="help-icon" data-tooltip="A posição inicial da onda. Mover a fase desloca o gráfico para os lados.">?</span></span><span id="v_phase1" class="val">0°</span></div>
+        <input id="phase1" type="range" min="0" max="628" value="0">
+      </label>
+    </div>
+    <div class="wave-control">
+      <h3 style="color: var(--accent-magenta);">Onda 2 <span class="help-icon" data-tooltip="Segunda componente senoidal usada para interagir com a primeira.">?</span></h3>
+      <label>
+        <div class="row-val"><span class="label-title">Amplitude <span class="help-icon" data-tooltip="A altura máxima da segunda onda.">?</span></span><span id="v_amp2" class="val">50</span></div>
+        <input id="amp2" type="range" min="0" max="100" value="50">
+      </label>
+      <label>
+        <div class="row-val"><span class="label-title">Frequência <span class="help-icon" data-tooltip="Para interferências contínuas estáveis, mantenha as frequências iguais.">?</span></span><span id="v_freq2" class="val">2</span></div>
+        <input id="freq2" type="range" min="1" max="5" value="2">
+      </label>
+      <label>
+        <div class="row-val"><span class="label-title">Fase <span class="help-icon" data-tooltip="Em 180° de diferença, cristas encontram vales, gerando o cancelamento.">?</span></span><span id="v_phase2" class="val">180°</span></div>
+        <input id="phase2" type="range" min="0" max="628" value="314">
+      </label>
+    </div>
+  </div>
+  <div class="buttons">
+    <button id="constructive" class="active-constructive">Interferência Construtiva</button>
+    <button id="destructive">Interferência Destrutiva</button>
+    <button id="toggleAudio"> Ligar Áudio Vivo</button>
+  </div>
+
+  <footer>
+    <div class="footer-left">
+      <span><b>Desenvolvido por:</b> Jullia</span>
+      <span>Projeto de Demonstração Acadêmica - Ondulatória</span>
+    </div>
+    <div class="footer-right">
+      <span>Ano Letivo: 2025/2026</span>
+    </div>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerY = height / 2;
+
+    const amp1 = document.getElementById("amp1");
+    const freq1 = document.getElementById("freq1");
+    const phase1 = document.getElementById("phase1");
+    const amp2 = document.getElementById("amp2");
+    const freq2 = document.getElementById("freq2");
+    const phase2 = document.getElementById("phase2");
+
+    const v_amp1 = document.getElementById("v_amp1");
+    const v_freq1 = document.getElementById("v_freq1");
+    const v_phase1 = document.getElementById("v_phase1");
+    const v_amp2 = document.getElementById("v_amp2");
+    const v_freq2 = document.getElementById("v_freq2");
+    const v_phase2 = document.getElementById("v_phase2");
+
+    const btnConstructive = document.getElementById("constructive");
+    const btnDestructive = document.getElementById("destructive");
+    const btnToggleAudio = document.getElementById("toggleAudio");
+
+    let audioCtx = null;
+    let osc1 = null, osc2 = null;
+    let gain1 = null, gain2 = null;
+    let audioLigado = false;
+
+    function iniciarAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      osc1 = audioCtx.createOscillator();
+      gain1 = audioCtx.createGain();
+      osc2 = audioCtx.createOscillator();
+      gain2 = audioCtx.createGain();
+      
+      osc1.type = 'sine'; 
+      osc2.type = 'sine';
+      
+      osc1.connect(gain1); 
+      gain1.connect(audioCtx.destination);
+      osc2.connect(gain2); 
+      gain2.connect(audioCtx.destination);
+      
+      osc1.start(); 
+      osc2.start();
+      atualizarParametrosAudio();
+    }
+
+    function atualizarParametrosAudio() {
+      if (!audioCtx) return;
+      const baseFreq = 220; 
+      
+      osc1.frequency.setValueAtTime(baseFreq * parseFloat(freq1.value) * 0.5, audioCtx.currentTime);
+      osc2.frequency.setValueAtTime(baseFreq * parseFloat(freq2.value) * 0.5, audioCtx.currentTime);
+      
+      let vol1 = (parseFloat(amp1.value) / 100) * 0.12;
+      let vol2 = (parseFloat(amp2.value) / 100) * 0.12;
+      
+      gain1.gain.setValueAtTime(vol1, audioCtx.currentTime);
+
+      const p1 = parseFloat(phase1.value);
+      const p2 = parseFloat(phase2.value);
+      let dif = Math.abs(p2 - p1);
+      
+      if (freq1.value === freq2.value && (dif >= 300 && dif <= 328)) {
+        gain2.gain.setValueAtTime(-vol2, audioCtx.currentTime);
+      } else {
+        gain2.gain.setValueAtTime(vol2, audioCtx.currentTime);
+      }
+    }
+
+    btnToggleAudio.addEventListener("click", () => {
+      if (!audioLigado) {
+        if (!audioCtx) iniciarAudio();
+        else audioCtx.resume();
+        btnToggleAudio.textContent = "🛑 Desligar Áudio";
+        btnToggleAudio.classList.add("playing");
+        audioLigado = true;
+      } else {
+        if (audioCtx) audioCtx.suspend();
+        btnToggleAudio.textContent = "🔊 Ligar Áudio Vivo";
+        btnToggleAudio.classList.remove("playing");
+        audioLigado = false;
+      }
+    });
+
+    function onda(A, f, phi, x, t) {
+      return A * Math.sin(2 * Math.PI * f * (x / 200 - 0.01 * t) + phi);
+    }
+
+    function atualizarLabels() {
+      v_amp1.textContent = amp1.value;
+      v_freq1.textContent = freq1.value;
+      v_phase1.textContent = Math.round(parseFloat(phase1.value) * (180 / 314)) + "°";
+      v_amp2.textContent = amp2.value;
+      v_freq2.textContent = freq2.value;
+      v_phase2.textContent = Math.round(parseFloat(phase2.value) * (180 / 314)) + "°";
+    }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, width, height);
+      ctx.beginPath(); ctx.strokeStyle = "#161b22"; ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke();
+      
+      atualizarLabels(); 
+      atualizarParametrosAudio();
+
+      let A1 = parseFloat(amp1.value); let f1 = parseFloat(freq1.value); let phi1 = parseFloat(phase1.value) / 100;
+      let A2 = parseFloat(amp2.value); let f2 = parseFloat(freq2.value); let phi2 = parseFloat(phase2.value) / 100;
+
+      ctx.beginPath(); ctx.strokeStyle = "rgba(0, 240, 255, 0.75)"; ctx.lineWidth = 1.5;
+      for (let x = 0; x < width; x++) {
+        const y = centerY + onda(A1, f1, phi1, x, t);
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath(); ctx.strokeStyle = "rgba(255, 0, 255, 0.75)"; ctx.lineWidth = 1.5;
+      for (let x = 0; x < width; x++) {
+        const y = centerY + onda(A2, f2, phi2, x, t);
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath(); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3;
+      for (let x = 0; x < width; x++) {
+        const y = centerY + onda(A1, f1, phi1, x, t) + onda(A2, f2, phi2, x, t);
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      requestAnimationFrame(() => draw(t + 1));
+    }
+
+    btnConstructive.addEventListener("click", () => {
+      amp1.value = 50; amp2.value = 50; freq1.value = 2; freq2.value = 2; phase1.value = 0; phase2.value = 0;
+      btnConstructive.classList.add("active-constructive"); btnDestructive.classList.remove("active-destructive");
+    });
+
+    btnDestructive.addEventListener("click", () => {
+      amp1.value = 50; amp2.value = 50; freq1.value = 2; freq2.value = 2; phase1.value = 0; phase2.value = 314;
+      btnDestructive.classList.add("active-destructive"); btnConstructive.classList.remove("active-constructive");
+    });
+
+    const resetButtonsState = () => {
+      btnConstructive.classList.remove("active-constructive"); btnDestructive.classList.remove("active-destructive");
+    };
+    [amp1, freq1, phase1, amp2, freq2, phase2].forEach(input => input.addEventListener("input", resetButtonsState));
+
+    draw(0);
+  </script>
+</body>
+</html>

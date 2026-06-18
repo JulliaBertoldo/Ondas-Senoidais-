@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Controle Ondulatório</title>
+  <style>
+    :root {
+      --bg-dark: #090a10;
+      --bg-panel: #131422;
+      --border-glow: #ff00ff;
+      --accent-cyan: #00f0ff;
+      --text-main: #cdd6f4;
+      --text-dim: #79829a;
+    }
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .menu-container {
+      width: 100%;
+      max-width: 700px;
+      background: var(--bg-panel);
+      border: 2px solid rgba(255, 0, 255, 0.4);
+      border-radius: 16px;
+      padding: 35px;
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.15);
+      position: relative;
+    }
+    /* Filtro sutil de monitor futurista */
+    .menu-container::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+      z-index: 2;
+      background-size: 100% 4px;
+      pointer-events: none;
+      border-radius: 14px;
+    }
+    h1 {
+      margin: 0 0 5px 0;
+      font-size: 22px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 35px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      z-index: 3;
+    }
+    .menu-item {
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      background: #0b0c16;
+      border: 1px solid rgba(255, 0, 255, 0.15);
+      border-radius: 8px;
+      padding: 18px;
+      transition: all 0.2s ease-in-out;
+    }
+    .menu-item:hover {
+      background: #121428;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+      transform: scale(1.01);
+    }
+    .item-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--border-glow);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .menu-item:hover .item-title {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+    .item-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    footer {
+      margin-top: 35px;
+      width: 100%;
+      max-width: 700px;
+      border-top: 1px dashed rgba(255, 0, 255, 0.2);
+      padding-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="menu-container">
+    <h1>Painel de Controle Ondulatório</h1>
+    <div class="subtitle">SISTEMA INTERATIVO ONDAS // SELECIONE O MÓDULO</div>
+
+    <div class="menu-list">
+      <!-- Item 1 -->
+      <a href="ondassom.html" target="_blank" class="menu-item">
+        <span class="item-title">Módulo 01: Ondas Senoidais e Arduino</span>
+        <span class="item-desc">Análise básica de superposição de fase. O sinal gerado interage diretamente com o microfone e com o circuito físico de LED.</span>
+      </a>
+
+      <!-- Item 2 -->
+      <a href="AceleradorAcustico.html" target="_blank" class="menu-item">
+        <span class="item-title">Módulo 02: Acelerador de Batimento Acústico</span>
+        <span class="item-desc">Simulação de interferência com frequências ligeiramente desalinhadas, gerando pulsos rítmicos de amplitude.</span>
+      </a>
+
+      <!-- Item 3 -->
+      <a href="ondas.html" target="_blank" class="menu-item">
+        <span class="item-title">Módulo 03: Cuba de Ondas Bidimensional</span>
+        <span class="item-desc">Mapeamento espacial em duas dimensões (2D) reproduzindo colisões mecânicas de gotas d'água no espaço.</span>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div>OPERADOR: Julli // LAB DE ONDULATÓRIA</div>
+    <div>PERÍODO LETIVO: 2025/2026 // ACÚSTICA AVANÇADA</div>
+  </footer>
+
+</body>
+</html>
